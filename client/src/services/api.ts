@@ -9,6 +9,10 @@ export class ApiError extends Error {
   }
 }
 
+// Configurable API base URL for production deployments (e.g. Vercel frontend calling Render backend).
+// When unset/empty (e.g. in local development), falls back to '' (relative '/api' handled by Vite dev proxy).
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+
 /**
  * Uploads lecture PDF to the backend intake pipeline for validation and preprocessing.
  */
@@ -17,7 +21,7 @@ export async function uploadLecturePdf(file: File): Promise<PdfProcessSuccessRes
   formData.append('pdf', file);
 
   try {
-    const response = await fetch('/api/process-pdf', {
+    const response = await fetch(`${API_BASE_URL}/api/process-pdf`, {
       method: 'POST',
       body: formData,
     });
@@ -49,7 +53,7 @@ export async function uploadLecturePdf(file: File): Promise<PdfProcessSuccessRes
  */
 export async function checkBackendHealth(): Promise<{ status: string; phase: string }> {
   try {
-    const response = await fetch('/api/health');
+    const response = await fetch(`${API_BASE_URL}/api/health`);
     if (!response.ok) {
       throw new Error(`Health check failed with status ${response.status}`);
     }
