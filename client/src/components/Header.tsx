@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ serverConnected }) => {
             <div className="flex items-center space-x-2">
               <span className="text-lg font-bold tracking-tight text-slate-900">StudyFlow</span>
               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                Phase 1 MVP
+                PromptWars MVP
               </span>
             </div>
             <p className="text-xs text-slate-500 hidden sm:block">AI-Powered Student Workspace</p>

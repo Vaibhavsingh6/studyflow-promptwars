@@ -292,7 +292,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
               {/* Processing UX State: "Analyzing your lecture..." */}
               {status === 'uploading' && (
-                <div className="pt-3 border-t border-slate-200 space-y-3">
+                <div
+                  className="pt-3 border-t border-slate-200 space-y-3"
+                  aria-live="polite"
+                >
                   <div className="flex items-center space-x-3 bg-indigo-50/90 border border-indigo-200/80 p-4 rounded-xl text-indigo-950">
                     <Loader2 className="h-6 w-6 text-indigo-600 animate-spin flex-shrink-0" />
                     <div>
