@@ -1,0 +1,32 @@
+{
+  "name": "studyflow-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "StudyFlow — AI-Powered Student Workspace MVP for PromptWars",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"server,client\" -c \"blue,green\" \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build:server": "npm --prefix server run build",
+    "build:client": "npm --prefix client run build",
+    "build": "npm run build:server && npm run build:client",
+    "test:server": "npm --prefix server run test",
+    "test:client": "npm --prefix client run test",
+    "test": "npm run test:server && npm run test:client"
+  },
+  "keywords": [
+    "promptwars",
+    "studyflow",
+    "student-workspace",
+    "gemini"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}
