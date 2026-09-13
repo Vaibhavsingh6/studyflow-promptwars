@@ -14,7 +14,7 @@ export class GeminiError extends Error {
 }
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-const PRIMARY_MODEL = 'gemini-2.0-flash';
+const PRIMARY_MODEL = 'gemini-3.5-flash';
 const FALLBACK_MODEL = 'gemini-1.5-flash';
 
 /**
@@ -122,7 +122,7 @@ export async function generateStudyPack(lectureText: string): Promise<StudyPack>
   let response: Response;
   try {
     response = await callModel(PRIMARY_MODEL);
-    // If primary model 2.0-flash returns 404, fallback to 1.5-flash
+    // If primary model returns 404, fallback to secondary model
     if (response.status === 404) {
       console.warn(`[Gemini] ${PRIMARY_MODEL} returned 404, falling back to ${FALLBACK_MODEL}`);
       response = await callModel(FALLBACK_MODEL);
