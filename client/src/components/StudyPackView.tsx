@@ -10,6 +10,7 @@ import {
   Award,
   Sparkles,
   BookmarkCheck,
+  Check,
 } from 'lucide-react';
 
 interface StudyPackViewProps {
@@ -23,13 +24,17 @@ export const StudyPackView: React.FC<StudyPackViewProps> = ({
   file,
   onReset,
 }) => {
-  // Track selected option per question (0-4)
+  // Track selected option per question (index 0 to 4)
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
-  // Track whether the quiz has been submitted for evaluation
+  // Track whether quiz has been submitted
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const totalQuestions = studyPack.questions.length;
+  const answeredCount = Object.keys(selectedAnswers).length;
+  const allAnswered = answeredCount === totalQuestions;
+
   const handleSelectOption = (questionIndex: number, option: string) => {
-    if (isSubmitted) return; // Prevent changing after submission until retake
+    if (isSubmitted) return; // Locked once submitted
     setSelectedAnswers((prev) => ({
       ...prev,
       [questionIndex]: option,
@@ -39,35 +44,37 @@ export const StudyPackView: React.FC<StudyPackViewProps> = ({
   const handleResetQuiz = () => {
     setSelectedAnswers({});
     setIsSubmitted(false);
+    // Scroll smoothly to quiz top
+    const quizSection = document.getElementById('practice-quiz-section');
+    if (quizSection) {
+      quizSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
-  const allAnswered = studyPack.questions.every((_, idx) => selectedAnswers[idx] !== undefined);
-
-  // Calculate score
+  // Compute exact score (0 to 5)
   const score = studyPack.questions.reduce((acc, q, idx) => {
     return selectedAnswers[idx] === q.correctAnswer ? acc + 1 : acc;
   }, 0);
 
-  const percentage = Math.round((score / studyPack.questions.length) * 100);
-
+  const percentage = Math.round((score / totalQuestions) * 100);
   const optionLabels = ['A', 'B', 'C', 'D'];
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-8 pb-16">
-      {/* Top Source Document Bar */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 flex-shrink-0">
+      {/* Top Source Document Context Header */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center space-x-3.5 min-w-0">
+          <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700 flex-shrink-0">
             <FileText className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-semibold text-slate-900">{file.name}</span>
-              <span className="text-xs text-slate-500">({file.sizeFormatted})</span>
+              <span className="text-sm font-bold text-slate-900 truncate">{file.name}</span>
+              <span className="text-xs text-slate-500 font-medium">({file.sizeFormatted})</span>
             </div>
             <p className="text-xs text-emerald-700 font-medium flex items-center mt-0.5">
-              <Sparkles className="h-3.5 w-3.5 mr-1" />
-              AI Study Pack synthesized directly from your lecture
+              <Sparkles className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+              <span>AI Study Pack generated from lecture content</span>
             </p>
           </div>
         </div>
@@ -75,100 +82,137 @@ export const StudyPackView: React.FC<StudyPackViewProps> = ({
         <button
           type="button"
           onClick={onReset}
-          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer flex-shrink-0"
         >
-          <UploadCloud className="h-4 w-4" />
+          <UploadCloud className="h-3.5 w-3.5" />
           <span>Upload Another PDF</span>
         </button>
       </div>
 
-      {/* Main Title */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+      {/* Main Title Section */}
+      <div className="space-y-1">
+        <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Lecture Revision Pack</span>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 break-words">
           {studyPack.title}
         </h1>
       </div>
 
-      {/* 1. Summary Section */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-3">
-        <div className="flex items-center space-x-2 text-slate-900">
-          <BookmarkCheck className="h-5 w-5 text-blue-600" />
-          <h2 className="text-lg font-bold">Revision Summary</h2>
+      {/* 1. Revision Summary Section */}
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-xs space-y-3">
+        <div className="flex items-center space-x-2 text-slate-900 border-b border-slate-100 pb-3">
+          <BookmarkCheck className="h-5 w-5 text-blue-600 flex-shrink-0" />
+          <h2 className="text-lg font-bold tracking-tight">Revision Summary</h2>
         </div>
-        <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
+        <p className="text-sm sm:text-base text-slate-700 leading-relaxed break-words">
           {studyPack.summary}
         </p>
       </section>
 
-      {/* 2. Key Points Section */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
-        <div className="flex items-center space-x-2 text-slate-900">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          <h2 className="text-lg font-bold">Key Takeaways &amp; Concepts</h2>
+      {/* 2. Key Takeaways Section */}
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-xs space-y-4">
+        <div className="flex items-center space-x-2 text-slate-900 border-b border-slate-100 pb-3">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+          <h2 className="text-lg font-bold tracking-tight">Key Takeaways &amp; Concepts</h2>
         </div>
-        <ul className="space-y-2.5">
+        <ul className="space-y-3">
           {studyPack.keyPoints.map((point, index) => (
-            <li key={index} className="flex items-start space-x-3 text-sm text-slate-800">
-              <span className="h-5 w-5 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+            <li key={index} className="flex items-start space-x-3.5 text-sm text-slate-800">
+              <span className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
                 {index + 1}
               </span>
-              <span className="leading-normal">{point}</span>
+              <span className="leading-relaxed break-words flex-1">{point}</span>
             </li>
           ))}
         </ul>
       </section>
 
       {/* 3. Practice Quiz Section */}
-      <section className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
-          <div className="flex items-center space-x-2 text-slate-900">
-            <HelpCircle className="h-5 w-5 text-indigo-600" />
-            <h2 className="text-xl font-bold">Practice Quiz (5 Questions)</h2>
+      <section id="practice-quiz-section" className="space-y-6 pt-2">
+        {/* Quiz Header & Live Progress Indicator */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center space-x-2.5 text-slate-900">
+              <HelpCircle className="h-5 w-5 text-indigo-600 flex-shrink-0" />
+              <h2 className="text-xl font-bold tracking-tight">Practice Quiz (5 Questions)</h2>
+            </div>
+            <div className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full w-fit">
+              Progress: {answeredCount} of {totalQuestions} Answered
+            </div>
           </div>
-          <span className="text-xs text-slate-500 font-medium">
-            Test your comprehension of this lecture
-          </span>
+
+          <p className="text-xs sm:text-sm text-slate-500">
+            Select one answer for each question based on the lecture material, then check your results.
+          </p>
+
+          {/* Visual Progress Bar */}
+          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div
+              className={`h-2 rounded-full transition-all duration-300 ${
+                isSubmitted
+                  ? 'bg-emerald-500'
+                  : allAnswered
+                  ? 'bg-blue-600'
+                  : 'bg-indigo-500'
+              }`}
+              style={{ width: `${(answeredCount / totalQuestions) * 100}%` }}
+              role="progressbar"
+              aria-valuenow={answeredCount}
+              aria-valuemin={0}
+              aria-valuemax={totalQuestions}
+            />
+          </div>
         </div>
 
-        {/* Score Banner (when submitted) */}
+        {/* Score Banner (Shown once submitted) */}
         {isSubmitted && (
           <div
             role="status"
-            className={`border rounded-xl p-4 sm:p-5 flex items-center justify-between shadow-xs ${
+            className={`border rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs transition-all ${
               score >= 4
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
                 : score >= 3
-                ? 'bg-blue-50 border-blue-300 text-blue-900'
-                : 'bg-amber-50 border-amber-300 text-amber-900'
+                ? 'bg-blue-50 border-blue-300 text-blue-950'
+                : 'bg-amber-50 border-amber-300 text-amber-950'
             }`}
           >
-            <div className="flex items-center space-x-3">
-              <Award className="h-7 w-7 flex-shrink-0" />
-              <div>
-                <p className="text-base font-bold">
-                  Quiz Completed: {score} of {studyPack.questions.length} Correct ({percentage}%)
-                </p>
-                <p className="text-xs mt-0.5 opacity-90">
-                  {score === 5
-                    ? 'Outstanding! You have mastered the key concepts in this lecture.'
+            <div className="flex items-center space-x-3.5">
+              <div
+                className={`h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
+                  score >= 4
+                    ? 'bg-emerald-600 text-white'
                     : score >= 3
-                    ? 'Good progress! Review the explanations below to reinforce weaker areas.'
-                    : 'Keep studying! Read through the explanations and give it another try.'}
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-amber-600 text-white'
+                }`}
+              >
+                <Award className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">
+                  Quiz Completed: {score} of {totalQuestions} Correct ({percentage}%)
+                </h3>
+                <p className="text-xs sm:text-sm mt-0.5 opacity-90">
+                  {score === 5
+                    ? 'Outstanding! You answered every question correctly.'
+                    : score >= 3
+                    ? 'Solid grasp of the core concepts! Review the explanations below.'
+                    : 'Keep reviewing the notes above and give the quiz another try.'}
                 </p>
               </div>
             </div>
+
             <button
               type="button"
               onClick={handleResetQuiz}
-              className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 shadow-xs cursor-pointer flex-shrink-0"
+              className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 shadow-xs cursor-pointer flex-shrink-0 transition-colors"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Retake</span>
+              <RotateCcw className="h-4 w-4" />
+              <span>Retake Quiz</span>
             </button>
           </div>
         )}
 
-        {/* Questions List */}
+        {/* 5 Questions List */}
         <div className="space-y-6">
           {studyPack.questions.map((q, qIdx) => {
             const selectedOpt = selectedAnswers[qIdx];
@@ -177,43 +221,61 @@ export const StudyPackView: React.FC<StudyPackViewProps> = ({
             return (
               <div
                 key={qIdx}
-                className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-xs space-y-4"
+                className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 shadow-xs space-y-4 transition-all"
               >
-                <div className="flex items-start justify-between">
-                  <h3 className="text-sm sm:text-base font-semibold text-slate-900 leading-snug">
-                    <span className="text-indigo-600 font-bold mr-1.5">Q{qIdx + 1}.</span>
-                    {q.question}
-                  </h3>
+                {/* Question Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-bold tracking-wide uppercase bg-slate-100 text-slate-700 mb-1.5">
+                      Question {qIdx + 1} of {totalQuestions}
+                    </span>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug break-words">
+                      {q.question}
+                    </h3>
+                  </div>
+
+                  {/* Submission Status Badge */}
                   {isSubmitted && (
-                    <span className="ml-3 flex-shrink-0">
+                    <span className="flex-shrink-0 mt-0.5">
                       {isCorrect ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
+                          <CheckCircle2 className="h-4 w-4 mr-1 text-emerald-600" />
+                          Correct
+                        </span>
                       ) : (
-                        <XCircle className="h-5 w-5 text-rose-600" />
+                        <span className="inline-flex items-center text-xs font-bold text-rose-700 bg-rose-100 px-2.5 py-1 rounded-full">
+                          <XCircle className="h-4 w-4 mr-1 text-rose-600" />
+                          Incorrect
+                        </span>
                       )}
                     </span>
                   )}
                 </div>
 
-                {/* 4 Options */}
+                {/* 4 Options Grid */}
                 <div className="grid grid-cols-1 gap-2.5">
                   {q.options.map((opt, optIdx) => {
                     const isOptionSelected = selectedOpt === opt;
                     const isOptionCorrect = opt === q.correctAnswer;
 
-                    let btnStyle = 'border-slate-200 hover:border-slate-300 bg-slate-50/60 text-slate-800';
+                    let btnStyle =
+                      'border-slate-200 hover:border-slate-300 bg-slate-50/70 text-slate-800';
 
                     if (!isSubmitted) {
                       if (isOptionSelected) {
-                        btnStyle = 'border-blue-600 bg-blue-50 text-blue-900 ring-1 ring-blue-600';
+                        btnStyle =
+                          'border-blue-600 bg-blue-50/90 text-blue-950 font-semibold ring-2 ring-blue-500 shadow-xs';
                       }
                     } else {
                       if (isOptionCorrect) {
-                        btnStyle = 'border-emerald-500 bg-emerald-50 text-emerald-950 font-medium ring-1 ring-emerald-500';
+                        btnStyle =
+                          'border-emerald-500 bg-emerald-50 text-emerald-950 font-semibold ring-2 ring-emerald-500';
                       } else if (isOptionSelected && !isCorrect) {
-                        btnStyle = 'border-rose-400 bg-rose-50 text-rose-950 line-through ring-1 ring-rose-400';
+                        btnStyle =
+                          'border-rose-400 bg-rose-50 text-rose-950 line-through ring-2 ring-rose-400';
                       } else {
-                        btnStyle = 'border-slate-200 bg-slate-50/40 text-slate-400 opacity-70';
+                        btnStyle =
+                          'border-slate-200 bg-slate-50/40 text-slate-400 opacity-60';
                       }
                     }
 
@@ -223,27 +285,46 @@ export const StudyPackView: React.FC<StudyPackViewProps> = ({
                         type="button"
                         onClick={() => handleSelectOption(qIdx, opt)}
                         disabled={isSubmitted}
-                        className={`text-left p-3 rounded-lg border text-sm transition-all duration-150 flex items-start space-x-3 cursor-pointer disabled:cursor-default ${btnStyle}`}
+                        className={`text-left p-3.5 rounded-xl border text-sm transition-all duration-150 flex items-start space-x-3 cursor-pointer disabled:cursor-default ${btnStyle}`}
                       >
-                        <span className="font-semibold text-xs rounded-md bg-white border border-slate-200 h-6 w-6 flex items-center justify-center flex-shrink-0 text-slate-700">
+                        <span
+                          className={`font-bold text-xs rounded-lg h-6 w-6 flex items-center justify-center flex-shrink-0 transition-colors ${
+                            isOptionSelected && !isSubmitted
+                              ? 'bg-blue-600 text-white'
+                              : isOptionCorrect && isSubmitted
+                              ? 'bg-emerald-600 text-white'
+                              : isOptionSelected && isSubmitted && !isCorrect
+                              ? 'bg-rose-600 text-white'
+                              : 'bg-white border border-slate-200 text-slate-700'
+                          }`}
+                        >
                           {optionLabels[optIdx]}
                         </span>
-                        <span className="flex-1 mt-0.5">{opt}</span>
+                        <span className="flex-1 mt-0.5 break-words leading-relaxed">{opt}</span>
+
+                        {isOptionSelected && !isSubmitted && (
+                          <Check className="h-4 w-4 text-blue-600 flex-shrink-0 mt-1" />
+                        )}
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Explanation Box (Revealed after submission) */}
+                {/* AI Explanation Box (Revealed after submission) */}
                 {isSubmitted && (
-                  <div className="text-xs bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-1 mt-3">
-                    <p className="font-bold text-slate-700">
-                      {isCorrect ? 'Correct!' : 'Incorrect.'}{' '}
+                  <div className="text-xs bg-slate-50 rounded-xl p-3.5 sm:p-4 border border-slate-200 space-y-1.5 mt-2">
+                    <p className="font-bold text-slate-800 flex items-center">
+                      <span className="mr-1.5">Explanation:</span>
                       <span className="font-normal text-slate-600">
-                        Answer: <strong className="text-slate-900">{q.correctAnswer}</strong>
+                        Correct Answer is{' '}
+                        <strong className="text-slate-900 font-semibold">
+                          ({optionLabels[q.options.indexOf(q.correctAnswer)]}) {q.correctAnswer}
+                        </strong>
                       </span>
                     </p>
-                    <p className="text-slate-600 leading-relaxed">{q.explanation}</p>
+                    <p className="text-slate-600 leading-relaxed break-words">
+                      {q.explanation}
+                    </p>
                   </div>
                 )}
               </div>
@@ -251,19 +332,32 @@ export const StudyPackView: React.FC<StudyPackViewProps> = ({
           })}
         </div>
 
-        {/* Submit Quiz Action Bar */}
+        {/* Submit Quiz Action Section (Hidden once submitted) */}
         {!isSubmitted && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-            <span className="text-xs text-slate-500">
-              {allAnswered
-                ? 'All 5 questions answered. Ready to check results!'
-                : `Answered ${Object.keys(selectedAnswers).length} of 5 questions.`}
-            </span>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-xs text-slate-600 text-center sm:text-left">
+              {allAnswered ? (
+                <span className="font-semibold text-emerald-700 inline-flex items-center">
+                  <CheckCircle2 className="h-4 w-4 mr-1.5 text-emerald-600" />
+                  All 5 questions answered. Ready to check your score!
+                </span>
+              ) : (
+                <span>
+                  Please select an answer for all 5 questions to submit ({answeredCount}/5 answered).
+                </span>
+              )}
+            </div>
+
             <button
               type="button"
-              onClick={() => setIsSubmitted(true)}
+              onClick={() => {
+                if (allAnswered) {
+                  setIsSubmitted(true);
+                  window.scrollTo({ top: 350, behavior: 'smooth' });
+                }
+              }}
               disabled={!allAnswered}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-xs cursor-pointer"
+              className="w-full sm:w-auto px-7 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
             >
               Check Quiz Answers
             </button>
