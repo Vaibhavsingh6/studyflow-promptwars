@@ -35,8 +35,10 @@ app.use((req, res) => {
 // Centralized error handler (must be last middleware)
 app.use(errorHandler);
 
-// Start server
-if (process.env.NODE_ENV !== 'test') {
+// Start server (only when executed directly as a standalone process, not when imported as a serverless module)
+const isDirectExecution = typeof require !== 'undefined' && require.main === module;
+
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL && isDirectExecution) {
   app.listen(PORT, () => {
     console.log(`[StudyFlow Server] Running on http://localhost:${PORT}`);
     console.log(`[StudyFlow Server] Health check available at http://localhost:${PORT}/api/health`);
